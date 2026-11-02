@@ -1,0 +1,790 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Les coordonnées d'un vecteur</title>
+
+<style>
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 16px;
+  font-family: Arial, sans-serif;
+  text-align: center;
+  background: #f5f7fb;
+  color: #202b3c;
+  transition: background .3s;
+}
+
+body.error { background: #fff0f0; }
+body.success { background: #edfff1; }
+
+h1 {
+  font-size: 1.5rem;
+  margin: 8px 0;
+}
+
+.subtitle {
+  color: #526174;
+  margin-bottom: 16px;
+}
+
+.container {
+  max-width: 520px;
+  margin: auto;
+}
+
+.score {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 16px 0;
+}
+
+.score div {
+  background: white;
+  border-radius: 12px;
+  padding: 10px 14px;
+  box-shadow: 0 2px 6px #00000010;
+  font-size: .95rem;
+}
+
+.graph {
+  width: 100%;
+  max-width: 390px;
+  margin: 12px auto;
+  background: white;
+  border-radius: 16px;
+  padding: 8px;
+  box-shadow: 0 2px 8px #00000010;
+}
+
+svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.controls {
+  background: white;
+  padding: 16px;
+  border-radius: 16px;
+  margin: 16px auto;
+  max-width: 360px;
+  box-shadow: 0 2px 8px #00000010;
+}
+
+.coordinate-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  margin: 12px 0;
+}
+
+.axis-label {
+  font-size: 1.2rem;
+  font-weight: bold;
+  width: 20px;
+}
+
+.value {
+  font-size: 1.5rem;
+  font-weight: bold;
+  min-width: 36px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.step-button {
+  width: 48px;
+  height: 44px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #f4f7fb;
+  color: #1e3a5f;
+  font-size: 1.5rem;
+  font-weight: bold;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.step-button:active {
+  background: #dce8f7;
+  transform: scale(.96);
+}
+
+.step-button:disabled {
+  opacity: .35;
+  cursor: default;
+}
+
+.check-button {
+  border: none;
+  background: #1769c2;
+  color: white;
+  padding: 13px 24px;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 12px;
+  width: 100%;
+  max-width: 300px;
+}
+
+.check-button:disabled {
+  opacity: .5;
+}
+
+.feedback {
+  min-height: 30px;
+  font-weight: bold;
+  margin: 12px 0 4px;
+}
+
+/* Coordonnées en colonne avec parenthèses */
+.vector-answer {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  font-size: 1.15rem;
+}
+
+.vector-column {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.vector-parentheses {
+  font-family: "Times New Roman", serif;
+  font-size: 3.1rem;
+  font-weight: normal;
+  line-height: 1;
+}
+
+.vector-values {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.35;
+  min-width: 20px;
+  font-size: 1.2rem;
+}
+
+#confetti {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 10;
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="confetti"></canvas>
+
+<div class="container">
+
+  <h1>Les coordonnées d'un vecteur</h1>
+  <p class="subtitle">
+    Lis le vecteur bleu et retrouve ses coordonnées.
+  </p>
+
+  <div class="score">
+    <div>Réussites : <strong id="score">0</strong></div>
+    <div>Exercices : <strong id="total">0</strong></div>
+    <div>Réussite : <strong id="percent">0 %</strong></div>
+  </div>
+
+  <div class="graph">
+    <svg id="graph" viewBox="0 0 360 360"
+         role="img" aria-label="Repère avec un vecteur">
+    </svg>
+  </div>
+
+  <div class="controls">
+
+    <p><strong>Choisis les coordonnées du vecteur :</strong></p>
+
+    <div class="coordinate-row">
+      <span class="axis-label">x</span>
+      <button class="step-button" id="xMinus"
+              aria-label="Diminuer x">−</button>
+      <span class="value" id="xValue">0</span>
+      <button class="step-button" id="xPlus"
+              aria-label="Augmenter x">+</button>
+    </div>
+
+    <div class="coordinate-row">
+      <span class="axis-label">y</span>
+      <button class="step-button" id="yMinus"
+              aria-label="Diminuer y">−</button>
+      <span class="value" id="yValue">0</span>
+      <button class="step-button" id="yPlus"
+              aria-label="Augmenter y">+</button>
+    </div>
+
+    <button class="check-button" id="check">
+      Vérifier ma réponse
+    </button>
+
+    <div class="feedback" id="feedback" aria-live="polite"></div>
+    <div id="solution"></div>
+
+  </div>
+</div>
+
+<script>
+const NS = "http://www.w3.org/2000/svg";
+const svg = document.getElementById("graph");
+
+const center = 180;
+const unit = 30;
+const min = -5;
+const max = 5;
+
+let sx = 0;
+let sy = 0;
+let ex = 0;
+let ey = 0;
+
+let dx = 0;
+let dy = 0;
+
+let answerX = 0;
+let answerY = 0;
+
+let errors = 0;
+let answered = false;
+
+let score = 0;
+let total = 0;
+
+// Conversion des coordonnées en pixels
+function px(x) {
+  return center + x * unit;
+}
+
+function py(y) {
+  return center - y * unit;
+}
+
+// Création d'un élément SVG
+function el(name, attrs = {}, parent = svg) {
+  const node = document.createElementNS(NS, name);
+
+  for (const [key, value] of Object.entries(attrs)) {
+    node.setAttribute(key, value);
+  }
+
+  parent.appendChild(node);
+  return node;
+}
+
+// Dessin d'une flèche
+function drawArrow(parent, x1, y1, x2, y2, color, width) {
+  const length = Math.hypot(x2 - x1, y2 - y1);
+
+  if (length < 1) return;
+
+  const ux = (x2 - x1) / length;
+  const uy = (y2 - y1) / length;
+  const head = 8;
+
+  el("line", {
+    x1,
+    y1,
+    x2: x2 - ux * head * 0.7,
+    y2: y2 - uy * head * 0.7,
+    stroke: color,
+    "stroke-width": width,
+    "stroke-linecap": "round"
+  }, parent);
+
+  const bx = x2 - ux * head;
+  const by = y2 - uy * head;
+  const nx = -uy;
+  const ny = ux;
+
+  el("polygon", {
+    points: [
+      `${x2},${y2}`,
+      `${bx + nx * head * 0.48},${by + ny * head * 0.48}`,
+      `${bx - nx * head * 0.48},${by - ny * head * 0.48}`
+    ].join(" "),
+    fill: color
+  }, parent);
+}
+
+// Dessin du repère
+function drawGrid() {
+  svg.innerHTML = "";
+
+  for (let i = min; i <= max; i++) {
+    const p = px(i);
+    const q = py(i);
+
+    el("line", {
+      x1: p, y1: 30, x2: p, y2: 330,
+      stroke: "#dce3ec",
+      "stroke-width": 1
+    });
+
+    el("line", {
+      x1: 30, y1: q, x2: 330, y2: q,
+      stroke: "#dce3ec",
+      "stroke-width": 1
+    });
+  }
+
+  // Axes
+  el("line", {
+    x1: 25, y1: center, x2: 337, y2: center,
+    stroke: "#26364a",
+    "stroke-width": 1.8
+  });
+
+  el("line", {
+    x1: center, y1: 337, x2: center, y2: 23,
+    stroke: "#26364a",
+    "stroke-width": 1.8
+  });
+
+  drawArrow(svg, 325, center, 337, center, "#26364a", 1.8);
+  drawArrow(svg, center, 35, center, 23, "#26364a", 1.8);
+
+  // Graduations et nombres
+  for (let i = min; i <= max; i++) {
+    const p = px(i);
+    const q = py(i);
+
+    el("line", {
+      x1: p, y1: center - 4,
+      x2: p, y2: center + 4,
+      stroke: "#26364a",
+      "stroke-width": 1
+    });
+
+    el("line", {
+      x1: center - 4, y1: q,
+      x2: center + 4, y2: q,
+      stroke: "#26364a",
+      "stroke-width": 1
+    });
+
+    if (i !== 0) {
+      const tx = el("text", {
+        x: p,
+        y: center + 17,
+        "text-anchor": "middle",
+        "font-size": 10,
+        fill: "#526174"
+      });
+      tx.textContent = i;
+
+      const ty = el("text", {
+        x: center - 10,
+        y: q + 3,
+        "text-anchor": "end",
+        "font-size": 10,
+        fill: "#526174"
+      });
+      ty.textContent = i;
+    }
+  }
+
+  const origin = el("text", {
+    x: center - 9,
+    y: center + 14,
+    "font-size": 10,
+    fill: "#526174"
+  });
+  origin.textContent = "0";
+
+  const xLabel = el("text", {
+    x: 342,
+    y: center + 5,
+    "font-size": 14,
+    "font-weight": "bold",
+    fill: "#26364a"
+  });
+  xLabel.textContent = "x";
+
+  const yLabel = el("text", {
+    x: center + 8,
+    y: 18,
+    "font-size": 14,
+    "font-weight": "bold",
+    fill: "#26364a"
+  });
+  yLabel.textContent = "y";
+}
+
+// Dessin du vecteur bleu
+function drawVector() {
+  drawGrid();
+
+  drawArrow(
+    svg,
+    px(sx), py(sy),
+    px(ex), py(ey),
+    "#1478e8",
+    2.4
+  );
+}
+
+// Affichage des coordonnées en colonne
+function vectorHTML(x, y) {
+  return `
+    <div class="vector-column"
+         aria-label="Coordonnées ${x} et ${y}">
+      <span class="vector-parentheses">(</span>
+      <span class="vector-values">
+        <span>${x}</span>
+        <span>${y}</span>
+      </span>
+      <span class="vector-parentheses">)</span>
+    </div>
+  `;
+}
+
+// Positionnement des étiquettes de correction
+function drawCorrectionLabels() {
+  const horizontalMid = (px(sx) + px(ex)) / 2;
+  const verticalMid = (py(sy) + py(ey)) / 2;
+
+  // Valeur horizontale
+  const horizontalLabel = el("text", {
+    x: dx === 0 ? px(sx) + 10 : horizontalMid,
+    y: py(sy) + (sy >= -3 ? 17 : -9),
+    "text-anchor": "middle",
+    "font-size": 13,
+    "font-weight": "bold",
+    fill: "#c62828"
+  });
+  horizontalLabel.textContent = dx;
+
+  // Valeur verticale
+  const verticalLabel = el("text", {
+    x: px(ex) + (dx >= 0 ? 12 : -12),
+    y: dy === 0 ? py(ey) - 10 : verticalMid,
+    "text-anchor": dx >= 0 ? "start" : "end",
+    "font-size": 13,
+    "font-weight": "bold",
+    fill: "#c62828"
+  });
+  verticalLabel.textContent = dy;
+}
+
+// Dessin de la correction en angle droit
+function drawCorrection() {
+  const group = el("g", {});
+
+  const startX = px(sx);
+  const startY = py(sy);
+  const endX = px(ex);
+  const endY = py(ey);
+
+  // Déplacement horizontal
+  drawArrow(
+    group,
+    startX, startY,
+    endX, startY,
+    "#e53935",
+    2.7
+  );
+
+  // Déplacement vertical
+  drawArrow(
+    group,
+    endX, startY,
+    endX, endY,
+    "#e53935",
+    2.7
+  );
+
+  drawCorrectionLabels();
+
+  document.getElementById("solution").innerHTML =
+    `<div class="vector-answer">
+      Coordonnées du vecteur : ${vectorHTML(dx, dy)}
+    </div>`;
+}
+
+// Mise à jour des commandes
+function updateControls() {
+  document.getElementById("xValue").textContent = answerX;
+  document.getElementById("yValue").textContent = answerY;
+
+  document.getElementById("xMinus").disabled =
+    answered || answerX <= -10;
+
+  document.getElementById("xPlus").disabled =
+    answered || answerX >= 10;
+
+  document.getElementById("yMinus").disabled =
+    answered || answerY <= -10;
+
+  document.getElementById("yPlus").disabled =
+    answered || answerY >= 10;
+}
+
+// Mise à jour du score
+function updateScore() {
+  document.getElementById("score").textContent = score;
+  document.getElementById("total").textContent = total;
+
+  const percent = total === 0
+    ? 0
+    : Math.round(score / total * 100);
+
+  document.getElementById("percent").textContent =
+    percent + " %";
+}
+
+// Modification des coordonnées choisies
+function changeValue(axis, amount) {
+  if (answered) return;
+
+  if (axis === "x") {
+    answerX = Math.max(-10, Math.min(10, answerX + amount));
+  } else {
+    answerY = Math.max(-10, Math.min(10, answerY + amount));
+  }
+
+  updateControls();
+}
+
+document.getElementById("xMinus").onclick =
+  () => changeValue("x", -1);
+
+document.getElementById("xPlus").onclick =
+  () => changeValue("x", 1);
+
+document.getElementById("yMinus").onclick =
+  () => changeValue("y", -1);
+
+document.getElementById("yPlus").onclick =
+  () => changeValue("y", 1);
+
+// Vérification de la réponse
+function checkAnswer() {
+  if (answered) return;
+
+  const correct = answerX === dx && answerY === dy;
+
+  if (correct) {
+    answered = true;
+
+    if (errors === 0) total++;
+    score++;
+
+    updateScore();
+
+    document.body.classList.remove("error");
+    document.body.classList.add("success");
+
+    document.getElementById("feedback").textContent = "";
+    document.getElementById("check").disabled = true;
+
+    updateControls();
+    launchConfetti();
+
+    setTimeout(newExercise, 1600);
+    return;
+  }
+
+  errors++;
+
+  // Première erreur : on laisse réessayer
+  if (errors === 1) {
+    total++;
+    updateScore();
+
+    document.body.classList.remove("success");
+    document.body.classList.add("error");
+
+    document.getElementById("feedback").textContent =
+      "Essaie encore !";
+
+    return;
+  }
+
+  // Deuxième erreur : affichage de la correction
+  answered = true;
+  updateScore();
+
+  document.body.classList.remove("success");
+  document.body.classList.add("error");
+
+  document.getElementById("feedback").textContent =
+    "Observe les déplacements pour comprendre la réponse.";
+
+  drawCorrection();
+
+  document.getElementById("solution").innerHTML =
+    `<div class="vector-answer">
+      Coordonnées du vecteur : ${vectorHTML(dx, dy)}
+    </div>`;
+
+  document.getElementById("check").disabled = true;
+  updateControls();
+
+  // Laisser 5 secondes pour lire la correction
+  setTimeout(newExercise, 5000);
+}
+
+document.getElementById("check").onclick = checkAnswer;
+
+// Création d'un nouvel exercice
+function newExercise() {
+  do {
+    // Point de départ aléatoire
+    sx = Math.floor(Math.random() * 9) - 4;
+    sy = Math.floor(Math.random() * 9) - 4;
+
+    // Point d'arrivée aléatoire
+    ex = Math.floor(Math.random() * 11) - 5;
+    ey = Math.floor(Math.random() * 11) - 5;
+
+    dx = ex - sx;
+    dy = ey - sy;
+
+  } while (
+    dx === 0 && dy === 0 ||
+    Math.abs(dx) > 10 ||
+    Math.abs(dy) > 10
+  );
+
+  answerX = 0;
+  answerY = 0;
+  errors = 0;
+  answered = false;
+
+  document.body.classList.remove("error", "success");
+
+  document.getElementById("feedback").textContent = "";
+  document.getElementById("solution").innerHTML = "";
+  document.getElementById("check").disabled = false;
+
+  updateControls();
+  drawVector();
+}
+
+// Animation des confettis
+const canvas = document.getElementById("confetti");
+const ctx = canvas.getContext("2d");
+
+let particles = [];
+let animationFrame = null;
+
+function resizeCanvas() {
+  canvas.width = window.innerWidth * devicePixelRatio;
+  canvas.height = window.innerHeight * devicePixelRatio;
+
+  ctx.setTransform(
+    devicePixelRatio, 0,
+    0, devicePixelRatio,
+    0, 0
+  );
+}
+
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+function launchConfetti() {
+  if (animationFrame) {
+    cancelAnimationFrame(animationFrame);
+    animationFrame = null;
+  }
+
+  particles = [];
+
+  const colors = [
+    "#e74c3c",
+    "#3498db",
+    "#f1c40f",
+    "#2ecc71",
+    "#9b59b6",
+    "#ff8c42"
+  ];
+
+  for (let i = 0; i < 150; i++) {
+    particles.push({
+      x: Math.random() * window.innerWidth,
+      y: -20 - Math.random() * window.innerHeight * 0.4,
+      vx: (Math.random() - 0.5) * 5,
+      vy: Math.random() * 4 + 2,
+      size: Math.random() * 7 + 3,
+      rotation: Math.random() * 360,
+      spin: (Math.random() - 0.5) * 12,
+      color: colors[Math.floor(Math.random() * colors.length)]
+    });
+  }
+
+  let frames = 0;
+
+  function animate() {
+    ctx.clearRect(
+      0, 0,
+      window.innerWidth,
+      window.innerHeight
+    );
+
+    particles.forEach(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.035;
+      p.rotation += p.spin;
+
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rotation * Math.PI / 180);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(
+        -p.size / 2,
+        -p.size / 2,
+        p.size,
+        p.size * 0.65
+      );
+      ctx.restore();
+    });
+
+    particles = particles.filter(
+      p => p.y < window.innerHeight + 30
+    );
+
+    frames++;
+
+    if (particles.length && frames < 180) {
+      animationFrame = requestAnimationFrame(animate);
+    } else {
+      ctx.clearRect(
+        0, 0,
+        window.innerWidth,
+        window.innerHeight
+      );
+      animationFrame = null;
+    }
+  }
+
+  animationFrame = requestAnimationFrame(animate);
+}
+
+// Premier exercice
+newExercise();
+</script>
+
+</body>
+</html>
